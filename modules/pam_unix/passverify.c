@@ -194,17 +194,22 @@ PAMH_ARG_DECL(int get_account_info,
 			return PAM_UNIX_RUN_HELPER;
 #endif
 		} else if (is_pwd_shadowed(*pwd)) {
+#ifndef HELPER_COMPILE
 			/*
 			 * ...and shadow password file entry for this user,
 			 * if shadowing is enabled
 			 */
-#ifndef HELPER_COMPILE
-			if (geteuid() || SELINUX_ENABLED)
-				return PAM_UNIX_RUN_HELPER;
-#endif
-			*spwdent = pam_modutil_getspnam(pamh, name);
-			if (*spwdent == NULL || (*spwdent)->sp_pwdp == NULL)
+			 *spwdent = getspnam(name);
+			 if (*spwdent == NULL || (*spwdent)->sp_pwdp == NULL)
 				return PAM_AUTHINFO_UNAVAIL;
+#else
+			/*
+			* The helper has to be invoked to deal with
+			* the shadow password file entry.
+			*/
+
+			return PAM_UNIX_RUN_HELPER;
+#endif
 		}
 	} else {
 		return PAM_USER_UNKNOWN;
